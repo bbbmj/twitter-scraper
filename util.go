@@ -121,7 +121,7 @@ func getTweetTimeline(ctx context.Context, query string, maxTweetsNbr int, fetch
 			default:
 			}
 
-			tweets, next, err := fetchFunc(query, maxTweetsNbr, nextCursor)
+			tweets, next, _, err := fetchFunc(query, maxTweetsNbr, nextCursor)
 			if err != nil {
 				channel <- &TweetResult{Error: err}
 				return

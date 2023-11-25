@@ -1,6 +1,9 @@
 package twitterscraper
 
-import "time"
+import (
+	"net/http"
+	"time"
+)
 
 type (
 	// Mention type.
@@ -184,5 +187,5 @@ type (
 	}
 
 	fetchProfileFunc func(query string, maxProfilesNbr int, cursor string) ([]*Profile, string, error)
-	fetchTweetFunc   func(query string, maxTweetsNbr int, cursor string) ([]*Tweet, string, error)
+	fetchTweetFunc   func(query string, maxTweetsNbr int, cursor string) ([]*Tweet, string, *http.Response, error)
 )

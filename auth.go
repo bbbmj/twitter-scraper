@@ -148,7 +148,7 @@ func (s *Scraper) IsLoggedIn() bool {
 		return false
 	}
 	var verify verifyCredentials
-	err = s.RequestAPI(req, &verify)
+	_, err = s.RequestAPI(req, &verify)
 	if err != nil || verify.Errors != nil {
 		s.isLogged = false
 		s.setBearerToken(bearerToken)
@@ -358,7 +358,7 @@ func (s *Scraper) Logout() error {
 	if err != nil {
 		return err
 	}
-	err = s.RequestAPI(req, nil)
+	_, err = s.RequestAPI(req, nil)
 	if err != nil {
 		return err
 	}

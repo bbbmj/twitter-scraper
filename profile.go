@@ -64,7 +64,7 @@ func (s *Scraper) GetProfile(username string) (Profile, error) {
 	query.Set("variables", mapToJSONString(variables))
 	req.URL.RawQuery = query.Encode()
 
-	err = s.RequestAPI(req, &jsn)
+	_, err = s.RequestAPI(req, &jsn)
 	if err != nil {
 		return Profile{}, err
 	}

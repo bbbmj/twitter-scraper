@@ -3,6 +3,7 @@ package twitterscraper
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/url"
 	"strconv"
 )
@@ -157,7 +158,7 @@ func (s *Scraper) getSearchTimeline(query string, maxNbr int, cursor string) (*s
 	req.URL.RawQuery = q.Encode()
 
 	var timeline searchTimeline
-	err = s.RequestAPI(req, &timeline)
+	_, err = s.RequestAPI(req, &timeline)
 	if err != nil {
 		return nil, err
 	}
@@ -165,13 +166,13 @@ func (s *Scraper) getSearchTimeline(query string, maxNbr int, cursor string) (*s
 }
 
 // FetchSearchTweets gets tweets for a given search query, via the Twitter frontend API
-func (s *Scraper) FetchSearchTweets(query string, maxTweetsNbr int, cursor string) ([]*Tweet, string, error) {
+func (s *Scraper) FetchSearchTweets(query string, maxTweetsNbr int, cursor string) ([]*Tweet, string, *http.Response, error) {
 	timeline, err := s.getSearchTimeline(query, maxTweetsNbr, cursor)
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 	tweets, nextCursor := timeline.parseTweets()
-	return tweets, nextCursor, nil
+	return tweets, nextCursor, nil, nil
 }
 
 // FetchSearchProfiles gets users for a given search query, via the Twitter frontend API

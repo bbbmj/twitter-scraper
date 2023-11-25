@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	twitterscraper "github.com/n0madic/twitter-scraper"
+	twitterscraper "github.com/bbbmj/twitter-scraper"
 )
 
 func TestFetchSearchCursor(t *testing.T) {
@@ -16,7 +16,7 @@ func TestFetchSearchCursor(t *testing.T) {
 	tweetsNbr := 0
 	nextCursor := ""
 	for tweetsNbr < maxTweetsNbr {
-		tweets, cursor, err := testScraper.FetchSearchTweets("twitter", maxTweetsNbr, nextCursor)
+		tweets, cursor, _, err := testScraper.FetchSearchTweets("twitter", maxTweetsNbr, nextCursor)
 		if err != nil {
 			t.Fatal(err)
 		}

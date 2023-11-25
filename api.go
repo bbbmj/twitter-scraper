@@ -11,7 +11,7 @@ import (
 const bearerToken string = "AAAAAAAAAAAAAAAAAAAAAPYXBAAAAAAACLXUNDekMxqa8h%2F40K4moUkGsoc%3DTYfbDKbT3jJPCEVnMYqilB28NHfOPqkca3qaAxGfsyKCs0wRbw"
 
 // RequestAPI get JSON from frontend API and decodes it
-func (s *Scraper) RequestAPI(req *http.Request, target interface{}) error {
+func (s *Scraper) RequestAPI(req *http.Request, target interface{}) (*http.Response, error) {
 	s.wg.Wait()
 	if s.delay > 0 {
 		defer func() {
@@ -27,7 +27,7 @@ func (s *Scraper) RequestAPI(req *http.Request, target interface{}) error {
 		if !s.IsGuestToken() || s.guestCreatedAt.Before(time.Now().Add(-time.Hour*3)) {
 			err := s.GetGuestToken()
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 		req.Header.Set("X-Guest-Token", s.guestToken)
@@ -48,17 +48,17 @@ func (s *Scraper) RequestAPI(req *http.Request, target interface{}) error {
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return err
+		return resp, err
 	}
 	defer resp.Body.Close()
 
 	content, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return resp, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("response status %s: %s", resp.Status, content)
+		return resp, fmt.Errorf("response status %s: %s", resp.Status, content)
 	}
 
 	if resp.Header.Get("X-Rate-Limit-Remaining") == "0" {
@@ -66,9 +66,9 @@ func (s *Scraper) RequestAPI(req *http.Request, target interface{}) error {
 	}
 
 	if target == nil {
-		return nil
+		return resp, nil
 	}
-	return json.Unmarshal(content, target)
+	return resp, json.Unmarshal(content, target)
 }
 
 // GetGuestToken from Twitter API

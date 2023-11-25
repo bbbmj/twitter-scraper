@@ -3,6 +3,7 @@ package twitterscraper
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 )
@@ -13,10 +14,10 @@ func (s *Scraper) GetTweets(ctx context.Context, user string, maxTweetsNbr int) 
 }
 
 // FetchTweets gets tweets for a given user, via the Twitter frontend API.
-func (s *Scraper) FetchTweets(user string, maxTweetsNbr int, cursor string) ([]*Tweet, string, error) {
+func (s *Scraper) FetchTweets(user string, maxTweetsNbr int, cursor string) ([]*Tweet, string, *http.Response, error) {
 	userID, err := s.GetUserIDByScreenName(user)
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 
 	if s.isOpenAccount {
@@ -26,14 +27,14 @@ func (s *Scraper) FetchTweets(user string, maxTweetsNbr int, cursor string) ([]*
 }
 
 // FetchTweetsByUserID gets tweets for a given userID, via the Twitter frontend GraphQL API.
-func (s *Scraper) FetchTweetsByUserID(userID string, maxTweetsNbr int, cursor string) ([]*Tweet, string, error) {
+func (s *Scraper) FetchTweetsByUserID(userID string, maxTweetsNbr int, cursor string) ([]*Tweet, string, *http.Response, error) {
 	if maxTweetsNbr > 200 {
 		maxTweetsNbr = 200
 	}
 
 	req, err := s.newRequest("GET", "https://twitter.com/i/api/graphql/UGi7tjRPr-d_U3bCPIko5Q/UserTweets")
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 
 	variables := map[string]interface{}{
@@ -78,24 +79,24 @@ func (s *Scraper) FetchTweetsByUserID(userID string, maxTweetsNbr int, cursor st
 	req.URL.RawQuery = query.Encode()
 
 	var timeline timelineV2
-	err = s.RequestAPI(req, &timeline)
+	resp, err := s.RequestAPI(req, &timeline)
 	if err != nil {
-		return nil, "", err
+		return nil, "", resp, err
 	}
 
 	tweets, nextCursor := timeline.parseTweets()
-	return tweets, nextCursor, nil
+	return tweets, nextCursor, resp, nil
 }
 
 // FetchTweetsByUserIDLegacy gets tweets for a given userID, via the Twitter frontend legacy API.
-func (s *Scraper) FetchTweetsByUserIDLegacy(userID string, maxTweetsNbr int, cursor string) ([]*Tweet, string, error) {
+func (s *Scraper) FetchTweetsByUserIDLegacy(userID string, maxTweetsNbr int, cursor string) ([]*Tweet, string, *http.Response, error) {
 	if maxTweetsNbr > 200 {
 		maxTweetsNbr = 200
 	}
 
 	req, err := s.newRequest("GET", "https://api.twitter.com/2/timeline/profile/"+userID+".json")
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 
 	q := req.URL.Query()
@@ -107,13 +108,13 @@ func (s *Scraper) FetchTweetsByUserIDLegacy(userID string, maxTweetsNbr int, cur
 	req.URL.RawQuery = q.Encode()
 
 	var timeline timelineV1
-	err = s.RequestAPI(req, &timeline)
+	resp, err := s.RequestAPI(req, &timeline)
 	if err != nil {
-		return nil, "", err
+		return nil, "", resp, err
 	}
 
 	tweets, nextCursor := timeline.parseTweets()
-	return tweets, nextCursor, nil
+	return tweets, nextCursor, resp, nil
 }
 
 // GetTweet get a single tweet by ID.
@@ -125,7 +126,7 @@ func (s *Scraper) GetTweet(id string) (*Tweet, error) {
 		}
 
 		var timeline timelineV1
-		err = s.RequestAPI(req, &timeline)
+		_, err = s.RequestAPI(req, &timeline)
 		if err != nil {
 			return nil, err
 		}
@@ -189,7 +190,7 @@ func (s *Scraper) GetTweet(id string) (*Tweet, error) {
 			s.setBearerToken(bearerToken2)
 		}
 
-		err = s.RequestAPI(req, &conversation)
+		_, err = s.RequestAPI(req, &conversation)
 
 		if curBearerToken != bearerToken2 {
 			s.setBearerToken(curBearerToken)
